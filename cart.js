@@ -46,18 +46,18 @@ function CartDAO(database) {
 
         // TODO-lab5 Replace all code above (in this method).
 
-        var cursor = this.db.collection('cart').find({userId}, {_id:0, items:1});
+        //var cursor = this.db.collection('cart').find({userId}, {_id:0, items:1});
         //Needs a flatten stage to give items only
         // sum non unique objects
 
-        cursor.each(function(err, doc) {
-             assert.equal(err, null);
-             if (doc != null) {
-                console.log(doc);
-                console.log("------");
-
-             }
-          });
+        // cursor.each(function(err, doc) {
+        //      assert.equal(err, null);
+        //      if (doc != null) {
+        //         console.log(doc);
+        //         console.log("------");
+        //
+        //      }
+        //   });
 
 
         //db.cart.find({userId: 558098});

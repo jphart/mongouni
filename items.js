@@ -26,14 +26,14 @@ function ItemDAO(database) {
 
     this.getCategories = function(callback) {
         "use strict";
-        
+
         /*
         * TODO-lab1A
         *
-        * LAB #1A: 
+        * LAB #1A:
         * Create an aggregation query to return the total number of items in each category. The
-        * documents in the array output by your aggregation should contain fields for 
-        * "_id" and "num". HINT: Test your mongodb query in the shell first before implementing 
+        * documents in the array output by your aggregation should contain fields for
+        * "_id" and "num". HINT: Test your mongodb query in the shell first before implementing
         * it in JavaScript.
         *
         * Ensure categories are organized in alphabetical order before passing to the callback.
@@ -44,50 +44,152 @@ function ItemDAO(database) {
         */
 
         var categories = [];
-        var category = {
-            _id: "All",
-            num: 9999
-        };
 
-        categories.push(category)
+        this.db.collection('item').aggregate( [
+            { $project: { category: 1, _id: 0 } },
+            { $group: {
+                _id: "$category",
+                num: { $sum: 1 }
+            } },
+            { $sort : {_id: 1}}
+        ] ).toArray(function(err, docs) {
+                    if(err) throw err;
 
-        // TODO-lab1A Replace all code above (in this method).
-        
-        callback(categories);
+                    if (docs.length < 1) {
+                        console.dir("No documents found.");
+                    }
+                    else{
+
+                        //Calculate totals
+                        var allNum = 0;
+                        docs.forEach(function (category){
+                            console.dir(category["_id"]+"--"+category["num"]);
+                            allNum += category["num"];
+                        });
+                        console.dir("Total: "+ allNum);
+
+                        //Add all to top
+                        var category = {
+                            _id: "All",
+                            num: allNum
+                        };
+                        categories.push(category)
+
+                        docs.forEach(function (category) {
+                            categories.push(category);
+                        });
+
+                        callback(categories);
+                    }
+        });
+
+        //Sort
+
+        // var categories = [];
+        // var category = {
+        //     _id: "All",
+        //     num: 9999
+        // };
+        //
+        // categories.push(category)
+        //
+        // // TODO-lab1A Replace all code above (in this method).
+        //
+        // //Query
+        // // db.item.aggregate( [
+        // //     { $project: { category: 1, _id: 0 } },
+        // //     { $group: {
+        // //         _id: "$category",
+        // //         num: { $sum: 1 }
+        // //     } }
+        // // ] );
+        //
+        //
+        //
+        //
+        //
+        //
+        // callback(categories);
     }
 
 
     this.getItems = function(category, page, itemsPerPage, callback) {
         "use strict";
-        
+
         /*
          * TODO-lab1B
          *
-         * LAB #1B: 
+         * LAB #1B:
          * Create a query to select only the items that should be displayed for a particular
-         * page. For example, on the first page, only the first itemsPerPage should be displayed. 
-         * Use limit() and skip() and the method parameters: page and itemsPerPage to identify 
-         * the appropriate products. Pass these items to the callback function. 
+         * page. For example, on the first page, only the first itemsPerPage should be displayed.
+         * Use limit() and skip() and the method parameters: page and itemsPerPage to identify
+         * the appropriate products. Pass these items to the callback function.
          *
-         * Do NOT sort items. 
+         * Do NOT sort items.
          *
          */
 
-        var pageItem = this.createDummyItem();
+         //Query
+        //  db.item.aggregate( [
+        //      { $match: { category: 'Books' } },
+        //      { $skip: 1},
+        //      { $limit: 1}
+        //  ] );
         var pageItems = [];
-        for (var i=0; i<5; i++) {
-            pageItems.push(pageItem);
+
+        var number_to_skip = 0;
+        if(page > 0){
+            number_to_skip = page * itemsPerPage;
+        }
+        console.dir("Skipping: "+number_to_skip);
+        console.dir("itemsPerPage: "+itemsPerPage)
+        console.dir("page: "+page)
+
+        var matcher = {};
+        if(category != "All"){
+            matcher.category = category;
         }
 
-        // TODO-lab1B Replace all code above (in this method).
+        console.dir(matcher);
 
-        callback(pageItems);
+
+
+        this.db.collection('item').aggregate( [
+            { $match: matcher },
+            { $skip: number_to_skip},
+            { $limit: itemsPerPage}
+        ] ).toArray(function(err, docs) {
+                    if(err) throw err;
+
+                    if (docs.length < 1) {
+                        console.dir("No documents found.");
+                    }
+                    else{
+                        console.dir("Found: "+docs.length)
+                        pageItems = docs;
+                        callback(pageItems);
+                    }
+        });
+
+
+
+
+
+
+        // var pageItem = this.createDummyItem();
+        // for (var i=0; i<5; i++) {
+        //     pageItems.push(pageItem);
+        // }
+        //
+        // // TODO-lab1B Replace all code above (in this method).
+        //
+        // callback(pageItems);
     }
 
 
     this.getNumItems = function(category, callback) {
         "use strict";
-        
+
         var numItems = 0;
 
         /*
@@ -101,29 +203,69 @@ function ItemDAO(database) {
          * getNumItems() method.
          *
          */
-        
-        callback(numItems);
+
+        //  db.item.aggregate( [
+        //      { $match: { category: 'Books' } },
+        //      { $project: { category: 1, _id: 0 } },
+        //      { $group: {
+        //          _id: "$category",
+        //          num: { $sum: 1 }
+        //      } },
+        //      { $project: { num: 1, _id: 0 } },
+        //  ]);
+
+         var matcher = {};
+         if(category != "All"){
+             matcher.category = category;
+         }
+
+         console.dir(matcher);
+
+        this.db.collection('item').aggregate( [
+            { $match: matcher },
+            { $project: { category: 1, _id: 0 } },
+            { $group: {
+                _id: "$category",
+                num: { $sum: 1 }
+            } },
+            { $project: { num: 1, _id: 0 } },
+        ] ).toArray(function(err, docs) {
+                    if(err) throw err;
+
+
+                    if (docs.length > 0){
+                        console.dir(docs.length+ " docs found, totalling");
+                        docs.forEach(function (number){
+                            numItems += number['num'];
+                        });
+                    }
+
+                    callback(numItems);
+
+        });
+
+        //callback(numItems);
     }
 
 
     this.searchItems = function(query, page, itemsPerPage, callback) {
         "use strict";
-        
+
         /*
          * TODO-lab2A
          *
          * LAB #2A: Using the value of the query parameter passed to this method, perform
-         * a text search against the item collection. Do not sort the results. Select only 
-         * the items that should be displayed for a particular page. For example, on the 
-         * first page, only the first itemsPerPage matching the query should be displayed. 
-         * Use limit() and skip() and the method parameters: page and itemsPerPage to 
-         * select the appropriate matching products. Pass these items to the callback 
-         * function. 
+         * a text search against the item collection. Do not sort the results. Select only
+         * the items that should be displayed for a particular page. For example, on the
+         * first page, only the first itemsPerPage matching the query should be displayed.
+         * Use limit() and skip() and the method parameters: page and itemsPerPage to
+         * select the appropriate matching products. Pass these items to the callback
+         * function.
          *
          * You will need to create a single text index on title, slogan, and description.
          *
          */
-        
+
         var item = this.createDummyItem();
         var items = [];
         for (var i=0; i<5; i++) {
@@ -140,7 +282,7 @@ function ItemDAO(database) {
         "use strict";
 
         var numItems = 0;
-        
+
         /*
         * TODO-lab2B
         *
@@ -164,7 +306,7 @@ function ItemDAO(database) {
          * to the callback function.
          *
          */
-        
+
         var item = this.createDummyItem();
 
         // TODO-lab3 Replace all code above (in this method).
@@ -191,8 +333,8 @@ function ItemDAO(database) {
         /*
          * TODO-lab4
          *
-         * LAB #4: Add a review to an item document. Reviews are stored as an 
-         * array value for the key "reviews". Each review has the fields: "name", "comment", 
+         * LAB #4: Add a review to an item document. Reviews are stored as an
+         * array value for the key "reviews". Each review has the fields: "name", "comment",
          * "stars", and "date".
          *
          */
