@@ -266,15 +266,43 @@ function ItemDAO(database) {
          *
          */
 
-        var item = this.createDummyItem();
-        var items = [];
-        for (var i=0; i<5; i++) {
-            items.push(item);
-        }
+        // var item = this.createDummyItem();
+        // var items = [];
+        // for (var i=0; i<5; i++) {
+        //     items.push(item);
+        // }
 
         // TODO-lab2A Replace all code above (in this method).
 
-        callback(items);
+        //callback(items);
+
+        // Query
+        // db.item.aggregate( [
+            // { $match: {  $text: {  $search: "Pen" }   }},
+            // { $skip: 0},
+            // { $limit: 5}
+        // ]);
+
+        var items = [];
+
+        var number_to_skip = 0;
+        if(page > 0){
+            number_to_skip = page * itemsPerPage;
+        }
+        console.dir("Skipping: "+number_to_skip);
+        console.dir("itemsPerPage: "+itemsPerPage)
+        console.dir("page: "+page)
+
+        this.db.collection('item').aggregate( [
+            { $match: {  $text: {  $search: query }   }},
+            { $skip: number_to_skip},
+            { $limit: itemsPerPage}
+        ] ).toArray(function(err, items) {
+                    if(err) throw err;
+
+                    console.dir("Found: "+items.length);
+                    callback(items);
+        });
     }
 
 
@@ -292,7 +320,16 @@ function ItemDAO(database) {
         *
         */
 
-        callback(numItems);
+        this.db.collection('item').aggregate( [
+            { $match: {  $text: {  $search: query }   }},
+        ] ).toArray(function(err, items) {
+                    if(err) throw err;
+
+                    console.dir("Found: "+items.length);
+                    callback(items.length);
+        });
+
+        //callback(numItems);
     }
 
 
@@ -306,12 +343,25 @@ function ItemDAO(database) {
          * to the callback function.
          *
          */
+         //Query
+        //  db.item.find(
+        //      { _id : 1}
+        //  );
 
-        var item = this.createDummyItem();
+         this.db.collection('item').find(
+             { _id : itemId }
+         ).toArray(function(err, items) {
+                     if(err) throw err;
+
+                     console.dir("Found: "+items.length);
+                     callback(items[0]);
+         });
+
+        //var item = this.createDummyItem();
 
         // TODO-lab3 Replace all code above (in this method).
 
-        callback(item);
+        //callback(item);
     }
 
 
@@ -346,9 +396,51 @@ function ItemDAO(database) {
             date: Date.now()
         }
 
-        var dummyItem = this.createDummyItem();
-        dummyItem.reviews = [reviewDoc];
-        callback(dummyItem);
+        // var dummyItem = this.createDummyItem();
+        // dummyItem.reviews = [reviewDoc];
+        // callback(dummyItem);
+
+        //UpdateOne item adding comment
+
+        //Query
+        // db.item.updateOne(
+        //     {"_id": 1},
+        //         {$push: {"reviews": {
+        //         "name": "Testing",
+        //         "comment": "Test comment",
+        //         "stars": "1",
+        //         "date": 1456676242
+        //         }
+        //     }
+        // });
+
+        var result = this.db.collection("item").updateOne(
+            {"_id": itemId},
+            {$push: {"reviews":  reviewDoc }},
+            function(err, results) {
+                console.log(results);
+                // //Look the item up
+                // this.db.collection('item').find(
+                //     { _id : itemId }
+                // ).toArray(function(err, items) {
+                //     if(err) throw err;
+                //
+                //     console.dir("Found: "+items.length);
+                //     callback(items[0]);
+                // });
+            });
+
+        console.log(result);
+
+        // //lookup item and return
+        this.db.collection('item').find(
+            { _id : itemId }
+        ).toArray(function(err, items) {
+                    if(err) throw err;
+
+                    console.dir("Found: "+items.length);
+                    callback(items[0]);
+        });
     }
 
 
