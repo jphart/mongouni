@@ -419,15 +419,6 @@ function ItemDAO(database) {
             {$push: {"reviews":  reviewDoc }},
             function(err, results) {
                 console.log(results);
-                // //Look the item up
-                // this.db.collection('item').find(
-                //     { _id : itemId }
-                // ).toArray(function(err, items) {
-                //     if(err) throw err;
-                //
-                //     console.dir("Found: "+items.length);
-                //     callback(items[0]);
-                // });
             });
 
         console.log(result);
@@ -437,8 +428,6 @@ function ItemDAO(database) {
             { _id : itemId }
         ).toArray(function(err, items) {
                     if(err) throw err;
-
-                    console.dir("Found: "+items.length);
                     callback(items[0]);
         });
     }

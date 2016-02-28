@@ -37,31 +37,100 @@ function CartDAO(database) {
         *
         */
 
-        var userCart = {
-            userId: userId,
-            items: []
-        }
-        var dummyItem = this.createDummyItem();
-        userCart.items.push(dummyItem);
+        // var userCart = {
+        //     userId: userId,
+        //     items: []
+        // }
+        // var dummyItem = this.createDummyItem();
+        // userCart.items.push(dummyItem);
 
         // TODO-lab5 Replace all code above (in this method).
 
-        //var cursor = this.db.collection('cart').find({userId}, {_id:0, items:1});
-        //Needs a flatten stage to give items only
-        // sum non unique objects
 
-        // cursor.each(function(err, doc) {
-        //      assert.equal(err, null);
-        //      if (doc != null) {
-        //         console.log(doc);
-        //         console.log("------");
-        //
-        //      }
-        //   });
+        // Query
+        // db.cart.aggregate( [
+        //     { $match: {  "userId": 558098 }},
+        //     { $unwind: "$items"},
+        //     { $group: {
+        //         _id: "$items._id",
+        //         userId: {$first: "$userId"},
+        //         quantity: { $sum : 1},
+        //         price: {$sum: "$items.price"},
+        //         title: {$first: "$items.title"},
+        //         description: {$first: "$items.description"},
+        //         slogan: {$first: "$items.slogan"},
+        //         stars: {$first: "$items.stars"},
+        //         category: {$first: "$items.category"},
+        //         img_url: {$first: "$items.img_url"},
+        //         reviews: {$first: "$items.reviews"}
+        //     } },
+        //     { $project: {_id: 1,
+        //         userId: 1,
+        //         items:[{
+        //             "quantity" : "$quantity",
+        //             "price": "$price",
+        //             "title": "$title",
+        //             "description": "$description",
+        //             "slogan": "$slogan",
+        //             "stars": "$stars",
+        //             "category": "$category",
+        //             "img_url": "$img_url",
+        //             "reviews": "$reviews",
+        //         }]
+        //     }}
+        // ]);
+
+        this.db.collection('cart').aggregate( [
+    { $match: {  "userId": userId }},
+    { $unwind: "$items"},
+    { $group: {
+        _id: "$items._id",
+        userId: {$first: "$userId"},
+        quantity: { $sum : 1},
+        price: {$first: "$items.price"},
+        title: {$first: "$items.title"},
+        description: {$first: "$items.description"},
+        slogan: {$first: "$items.slogan"},
+        stars: {$first: "$items.stars"},
+        category: {$first: "$items.category"},
+        img_url: {$first: "$items.img_url"},
+        reviews: {$first: "$items.reviews"}
+    } },
+    { $project: {_id: 1,
+        userId: 1,
+        items:[{
+            "quantity" : "$quantity",
+            "price": "$price",
+            "title": "$title",
+            "description": "$description",
+            "slogan": "$slogan",
+            "stars": "$stars",
+            "category": "$category",
+            "img_url": "$img_url",
+            "reviews": "$reviews",
+        }]
+    }}
+
+        ] ).toArray(function(err, userCart) {
+                    if(err) throw err;
+
+                    console.dir(userCart);
+
+                    if (userCart.length < 1) {
+                        console.dir("No documents found.");
+                        callback({ userId: userId, items: []});
+                    }
+                    else{
+                        console.dir("Found: "+userCart.length);
+
+                        console.dir(userCart[0].items);
+
+                        callback(userCart[0]);
+                    }
+        });
 
 
-        //db.cart.find({userId: 558098});
-        callback(userCart);
+        //callback(userCart);
     }
 
 
